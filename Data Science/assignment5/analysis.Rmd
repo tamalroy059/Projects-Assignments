@@ -1,0 +1,285 @@
+Installing required packages
+
+```{r}
+install.packages("caret")
+install.packages("rpart")
+install.packages("tree")
+install.packages("randomForest")
+install.packages("e1071")
+install.packages("ggplot2")
+```
+
+
+```{r}
+library(ggplot2)
+library(lattice)
+data<-read.csv("seaflow_21min.csv")
+
+#splitting to train and test data
+
+smp_size <- floor(0.5 * nrow(data))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+
+train <- data[train_ind, ]
+test <- data[-train_ind, ]
+
+```
+
+Mean of training set variable time
+
+```{r}
+mean(train$time)
+```
+
+
+Plotting pe against chl_small and color by pop
+
+```{r}
+qplot(chl_small, pe, colour = pop, data = data)
+```
+
+In the plot of pe vs. chl_small, the particles labeled ultra should appear to be somewhat "mixed" with two other populations of particles. Which two populations?
+
+crypto
+
+nano
+
+synecho
+
+pico
+
+answer: nano, pico
+
+#Decision Tree
+
+```{r}
+library("rpart")
+fol <- formula(pop ~ fsc_small + fsc_perp + fsc_big + pe + chl_small + chl_big)
+model <- rpart(fol,method = "class", data = train)
+print(model)
+```
+
+Use print(model) to inspect your tree. Which populations, if any, is your tree incapable of recognizing? (Which populations do not appear on any branch?)
+
+(It's possible, but very unlikely, that an incorrect answer to this question is the result of improbable sampling.)
+
+Hint: Look
+
+nano
+
+synecho
+
+ultra
+
+pico
+
+crypto
+
+answer: crypto
+
+7. 
+Most trees will include a node near the root that applies a rule to the pe field, where particles with a value less than some threshold will descend down one branch, and particles with a value greater than some threshold will descend down a different branch.
+
+If you look at the plot you created previously, you can verify that the threshold used in the tree is evident visually.
+
+What is the value of the threshold on the pe field learned in your model?
+
+5004
+
+8. 
+Based on your decision tree, which variables appear to be most important in predicting the class population?
+
+chl_big
+
+pe
+
+fsc_perp
+
+fsc_small
+
+chl_small
+
+fsc_big
+
+answer: pe, chl_small
+
+Prediction using decision tree
+
+```{r}
+prediction<-predict(model,test,type = "class")
+```
+
+Accuracy
+
+```{r}
+totalMatch=sum(test$pop==prediction)
+accuracy=totalMatch/length(test$pop)
+accuracy
+```
+
+
+Random Forest
+
+```{r}
+library(randomForest)
+model_rForest <- randomForest(fol,method = "class", data = train)
+print(model_rForest)
+```
+
+Prediction by random forest
+
+```{r}
+prediction_rForest<-predict(model_rForest,test,type = "class")
+```
+Accuracy by Random Forest
+
+```{r}
+totalMatch_rForest=sum(test$pop==prediction_rForest)
+accuracy_rForest=totalMatch_rForest/length(test$pop)
+accuracy_rForest
+```
+
+Importance of variable at Random Forest
+
+```{r}
+importance(model_rForest)
+```
+
+After calling importance(model), you should be able to determine which variables appear to be most important in terms of the gini impurity measure. Which ones are they?
+
+fsc_big
+
+pe
+
+fsc_small
+
+chl_big
+
+fsc_perp
+
+chl_small
+
+answer: pe chl_small
+
+Training Support Vector Machine Model 
+
+```{r}
+library("e1071")
+model_svm=svm(fol,data = train,method="class")
+```
+
+Prediction by svm
+
+```{r}
+prediction_svm<-predict(model_svm,test,type = "class")
+```
+
+Accuracy by svm
+
+```{r}
+totalMatch_svm=sum(test$pop==prediction_svm)
+accuracy_svm=totalMatch_svm/length(test$pop)
+accuracy_svm
+```
+
+Confusion Matrix for decision Tree
+
+```{r}
+table(pred = prediction, true = test$pop)
+```
+
+Confusion Matrix for Random Forest
+
+```{r}
+table(pred = prediction_rForest, true = test$pop)
+```
+
+Confusion Matrix for SVM 
+
+```{r}
+table(pred = prediction_svm, true = test$pop)
+```
+
+ 
+Construct a confusion matrix for each of the three methods using the table function. What appears to be the most common error the models make?
+
+pico is mistaken for ultra
+
+ultra is mistaken for pico
+
+synecho is mistaken for pico
+
+ultra is mistaken for nano
+
+nano is mistaken for ultra
+
+crypto is mistaken for ultra
+
+answer: ultra is mistaken for pico
+
+
+To find if the data is continuous or discrete
+
+
+```{r}
+length(unique(data$fsc_small))/length(data$fsc_small)
+```
+
+
+```{r}
+length(unique(data$fsc_perp))/length(data$fsc_perp)
+```
+
+
+```{r}
+length(unique(data$fsc_big))/length(data$fsc_big)
+```
+
+fsc_big is not continuous.(discrete)
+
+```{r}
+length(unique(data$pe))/length(data$pe)
+```
+
+```{r}
+length(unique(data$chl_small))/length(data$chl_small)
+```
+
+```{r}
+length(unique(data$chl_big))/length(data$chl_big)
+```
+
+
+change is formula
+
+```{r}
+newtrain<-train[which(train$file_id!=208),]
+newtest<-test[which(test$file_id!=208),]
+```
+
+Training Support Vector Machine Model 
+
+```{r}
+model_svm_new=svm(fol,data = newtrain,method="class")
+```
+
+Prediction by svm
+
+```{r}
+prediction_svm_new<-predict(model_svm_new,newtest,type = "class")
+```
+
+Accuracy by svm
+
+```{r}
+totalMatch_svm_new=sum(newtest$pop==prediction_svm_new)
+accuracy_svm_new=totalMatch_svm_new/length(newtest$pop)
+accuracy_svm_new-accuracy_svm
+
+```
+
+
+13.14.11.8.5

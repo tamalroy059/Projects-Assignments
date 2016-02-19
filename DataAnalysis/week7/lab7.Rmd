@@ -1,0 +1,201 @@
+---
+title: "Lab 7"
+date: "02-11-2016"
+output:
+  html_document:
+    theme: cerulean
+---
+Data:
+```{r}
+load(url("http://www.openintro.org/stat/data/evals.RData"))
+names(evals)
+```
+
+These data come from an experiment. 
+
+A) True 
+B) False
+
+
+
+answer: false
+
+The original research question posed in the paper is whether beauty leads directly to the differences in course evaluations. Given the study design, should the question be rephrased? If so, how? 
+
+A) No, the question is worded accurately. 
+B) Yes, revise wording to "Is there an association between beauty and course evaluations?" 
+C) Yes, revise wording to "Does beauty score increase the professor's course evaluations?" 
+D) Yes, revise wording to "Does beauty score decrease the professor's course evaluations?"
+
+Which of the following statements is false about the distribution of score? 
+
+answer: b
+
+Which of the following statements is false about the distribution of score? 
+
+A) The median of the distribution is 4.3. 
+B) 25% of the students gave their professors a score of over 4.6. 
+C) 11 of students gave a professor a score below 3. 
+C) The left skewness of the data suggests that the students are less likely to rate the professors highly.
+
+answer: D
+```{r}
+#Median of the data
+median(evals$score)
+#Summary of the Data
+summary(evals$score)
+#number of students who gave proessor below 3
+
+```
+
+Exercise: Excluding score, select two other variables and describe their relationship using an appropriate visualization (scatterplot, side-by-side boxplots, or mosaic plot).
+
+Scatter plot 
+```{r}
+plot(evals$age,evals$cls_perc_eval)
+```
+box plot 
+```{r}
+boxplot(bty_avg~ethnicity, data = evals, main = "Beauty witn ethnicity")
+```
+
+Simple Linear Regression
+
+```{r}
+plot(evals$score~evals$bty_avg)
+```
+
+
+```{r}
+plot(evals$score~jitter(evals$bty_avg, factor = 1))
+m_bty=lm(score~bty_avg, data = evals)
+summary(m_bty)
+anova(m_bty)
+cor(evals$score,evals$bty_avg)
+```
+
+Average beauty score seems to be a statistically and practically significant predictor. 
+
+A) True 
+B) False
+
+answer: b
+
+```{r}
+plot(m_bty$residuals~evals$bty_avg)
+hist(m_bty$residuals)
+```
+
+
+Use residual plots to evaluate whether the conditions of least squares regression are reasonable. Which of the following statements is an incorrect analysis of the residual plots and conditions? 
+
+A) Linear association: The residuals plot shows a random scatter. 
+B) Constant variance of residuals: No fan shape in residuals plot. 
+C) Nearly normal residuals: Residuals are right skewed, but the sample size is large, so this may not be an important violation of conditions. 
+D) Independent observations: Classes sampled randomly, no order effect.
+
+answer: c
+
+
+Multiple Regression
+
+```{r}
+plot(evals$bty_avg ~ evals$bty_f1lower)
+cor(evals$bty_avg,evals$bty_f1lower)
+plot(evals[,13:19])
+m_bty_gen<-lm(score~bty_avg+gender, data = evals)
+summary(m_bty_gen)
+
+#diagnostic
+plot(m_bty_gen$residuals~evals$bty_avg)
+hist(m_bty_gen$residuals)
+qqnorm(m_bty_gen$residuals)
+qqline(m_bty_gen$residuals)
+plot(m_bty_gen$residuals~m_bty_gen$fitted.values)
+```
+
+P-values and parameter estimates should only be trusted if the conditions for the regression are reasonable. Using diagnostic plots, we can conclude that the conditions for this model are reasonable. 
+
+A) True 
+B) False
+
+answer: a
+
+For two professors (one male and one female) who received the same beauty rating, the male professor is predicted to have the higher course evaluation score than the female. 
+
+A) True 
+B) False
+
+answer: a
+
+```{r}
+m_bty_rank<-lm(score~bty_avg+rank, data = evals)
+summary(m_bty_rank)
+anova(m_bty_rank)
+```
+
+Which of the following is the correct order of the three levels of rank if we were to order them from lowest predicted course evaluation score to highest predicted course evaluation score? 
+
+A) Teaching, Tenure Track, Tenured 
+B) Tenure track, Tenured 
+C) Tenure Track, Tenured, Teaching 
+D) Teaching, Tenured, Tenure Track
+
+answer: c
+
+Full Model
+
+```{r}
+m_full <- lm(score ~ rank + ethnicity + gender + language + age + cls_perc_eval 
+             + cls_students + cls_level + cls_profs + cls_credits + bty_avg, data = evals)
+summary(m_full)
+```
+
+Which of the following is the correct intrepetation of the coefficient associated with the ethnicity variable. 
+Non-minority professors are expected on average to score . 
+
+A) 0.19 points lower than minority professors, all else held constant. 
+B) 0.19 points higher than minority professors, all else held constant. 
+C) 0.02 points lower than minority professors, all else held constant. 
+D) 0.02 points higher than minority professors, all else held constant.
+
+answer: b
+
+Dropping rank
+
+```{r}
+m1 <- lm(score ~ ethnicity + gender + language + age + cls_perc_eval 
+             + cls_students + cls_level + cls_profs + cls_credits + bty_avg, data = evals)
+summary(m1)$adj.r.squared
+```
+
+Dropping ethnicity
+
+```{r}
+m2 = lm(score ~ rank + gender + language + age + cls_perc_eval + 
+    cls_students + cls_level + cls_profs + cls_credits + bty_avg, data = evals)
+summary(m2)$adj.r.squared
+```
+
+Dropping clas_profs
+```{r}
+m3 = lm(score ~ rank + gender + language + age + cls_perc_eval + 
+    cls_students + cls_level + cls_credits + bty_avg + ethnicity, data = evals)
+summary(m3)$adj.r.squared
+```
+
+Dropping class students
+```{r}
+m4 = lm(score ~ rank + gender + language + age + cls_perc_eval + 
+    ethnicity + cls_level + cls_profs + cls_credits + bty_avg, data = evals)
+summary(m4)$adj.r.squared
+```
+
+Elimination of which variable from the full model yielded the highest adjusted R-squared? 
+
+A) bty_avg 
+B) cls_profs 
+C) cls_students 
+D) rank
+
+answer: cls_profs

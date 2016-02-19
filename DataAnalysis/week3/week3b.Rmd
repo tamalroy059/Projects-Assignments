@@ -1,0 +1,96 @@
+---
+title: "MY PROJECT"
+date: "01-11-2016"
+output:
+  html_document:
+    theme: cerulean
+---
+
+<!-- For more info on RMarkdown see http://rmarkdown.rstudio.com/ -->
+
+<!-- Enter the code required to load your data in the space below. The data will be loaded but the line of code won't show up in your write up (echo=FALSE) in order to save space-->
+```{r echo=FALSE}
+load(url("http://www.openintro.org/stat/data/ames.RData"))
+population <- ames$Gr.Liv.Area
+samp <- sample(population, 60)
+```
+
+My distribution should be similar to others' distributions who also collect random samples from this population, but it is likely not exactly the same since it's a random sample. 
+
+A) True 
+B) False 
+
+answer: a
+
+```{r}
+sample_mean <- mean(samp)
+se <- sd(samp)/sqrt(60)
+lower <- sample_mean - 1.96 * se
+upper <- sample_mean + 1.96 * se
+
+```
+
+
+For the confidence interval to be valid, the sample mean must be normally distributed and have standard error s/n???s/n. Which of the following is not a condition needed for this to be true? 
+
+A) The sample is random. 
+B) The sample size, 60, is less than 10% of all houses. 
+C) The sample distribution must be nearly normal. 
+
+answer: c
+
+What does "95% confidence" mean? 
+
+A) 95% of the time the true average area of houses in Ames, Iowa, will be in this interval. 
+B) 95% of random samples of size 60 will yield confidence intervals that contain the true average area of houses in Ames, Iowa. 
+95% of the houses in Ames have an area in this interval. 
+C) 95% confident that the sample mean is in this interval. 
+
+answer: a
+
+What proportion of 95% confidence intervals would you expect to capture the true population mean? 
+
+A) 1% 
+B) 5% 
+c) 95% 
+D) 99% 
+
+answer: d
+
+```{r}
+samp_mean <- rep(NA, 50)
+samp_sd <- rep(NA, 50)
+n <- 60
+
+for(i in 1:50){
+  samp <- sample(population, n) # obtain a sample of size n = 60 from the population
+  samp_mean[i] <- mean(samp)    # save sample mean in ith element of samp_mean
+  samp_sd[i] <- sd(samp)        # save sample sd in ith element of samp_sd
+}
+
+lower <- samp_mean - 1.96 * samp_sd / sqrt(n) 
+upper <- samp_mean + 1.96 * samp_sd / sqrt(n)
+c(lower[1],upper[1])
+plot_ci(lower, upper, mean(population))
+
+```
+
+What is the appropriate critical value for a 99% confidence level? 
+
+A) 0.01 
+B) 0.99 
+C) 1.96 
+D) 2.33 
+E) 2.58 
+```{r}
+qnorm(.995)
+
+```
+answer: e
+
+We would expect 99% of the intervals to contain the true population mean. 
+
+A) True 
+B) False 
+
+answer: true

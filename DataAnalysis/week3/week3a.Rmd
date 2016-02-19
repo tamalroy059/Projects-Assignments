@@ -1,0 +1,120 @@
+---
+title: "MY PROJECT"
+date: "01-11-2016"
+output:
+  html_document:
+    theme: cerulean
+---
+
+
+### Data:
+
+```{r}
+load(url("http://www.openintro.org/stat/data/ames.RData"))
+```
+
+
+1. Which of the following is false? 
+
+A) The distribution of areas of houses in Ames is unimodal and right-skewed. 
+B) 50% of houses in Ames are smaller than 1,500 square feet. 
+C) The middle 50% of the houses range between approximately 1,130 square feet and 1,740 square feet. 
+D) The IQR is approximately 610 square feet. 
+E) The smallest house is 334 square feet and the largest is 5,642 square feet. 
+
+answer: D
+
+```{r}
+area<-ames$Gr.Liv.Area
+price<-ames$SalePrice
+summary(area)
+hist(area)
+IQR(area)
+```
+
+Suppose we took two more samples, one of size 100 and one of size 1000. Which would you think would provide a more accurate estimate of the population mean? 
+
+A) Sample size of 50 
+B) Sample size of 100 
+C) Sample size of 1000 
+
+answer: c
+
+```{r}
+samp0<- sample(area,50)
+samp1<- sample(area,50)
+```
+
+
+How many elements are there in this object called sample_means_small? 
+
+A) 0 
+B) 30 
+C) 50 
+D) 100 
+E) 5,000
+
+answer: d
+
+```{r}
+sample_means_small <- rep(NA, 100)
+ for(i in 1:100){
+     samp <- sample(area, 50)
+     sample_means_small[i] <- mean(samp)
+ }
+
+sample_means50 <- rep(NA, 5000)
+
+for(i in 1:5000){
+   samp <- sample(area, 50)
+   sample_means50[i] <- mean(samp)
+   }
+```
+
+Which of the following is true about the elements in the sampling distributions you created? 
+
+A) Each element represents a mean square footage from a simple random sample of 50 houses. 
+B) Each element represents the square footage of a house. 
+C) Each element represents the true population mean of square footage of houses. 
+
+answer: a
+
+
+```{r}
+sample_means10 <- rep(NA, 5000)
+sample_means100 <- rep(NA, 5000)
+
+for(i in 1:5000){
+  samp <- sample(area, 10)
+  sample_means10[i] <- mean(samp)
+  samp <- sample(area, 100)
+  sample_means100[i] <- mean(samp)
+}
+
+par(mfrow = c(3, 1))
+
+xlimits = range(sample_means10)
+
+hist(sample_means10, breaks = 20, xlim = xlimits)
+hist(sample_means50, breaks = 20, xlim = xlimits)
+hist(sample_means100, breaks = 20, xlim = xlimits)
+
+par(mfrow = c(1, 1))
+```
+
+
+It makes intuitive sense that as the sample size increases, the center of the sampling distribution becomes a more reliable estimate for the true population mean. Also as the sample size increases, the variability of the sampling distribution ________. 
+
+A) decreases 
+B) increases 
+C) stays the same 
+
+answer: a
+
+Which of the following is false? 
+
+A) The variability of the sampling distribution with the smaller sample size (sample_means50) is smaller than the variability of the sampling distribution with the larger sample size (sample_means150). 
+B) The means for the two sampling distribtuions are roughly similar. 
+C) Both sampling distributions are symmetric. 
+
+answer: a

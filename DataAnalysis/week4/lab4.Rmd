@@ -1,0 +1,230 @@
+
+
+### Data:
+
+```{r}
+load(url("http://bit.ly/dasi_nc"))
+load(url("http://bit.ly/dasi_gss_ws_cl"))
+```
+
+
+There are 1,000 cases in this data set, what do the cases represent? 
+
+A) The hospitals where the births took place 
+B) The fathers of the children 
+C) The days of the births 
+D) The births 
+
+answer: D
+
+How many mothers are we missing weight gain data from? 
+
+A) 0 
+B) 13 
+C) 27 
+D) 31 
+
+answer: c
+
+```{r}
+gained_clean=na.omit(nc$gained)
+n = length(gained_clean)
+```
+
+#The Bootstrap
+```{r}
+
+boot_means = rep(NA, 100)
+
+for(i in 1:100){
+  boot_sample = sample(gained_clean, n, replace = TRUE)
+  boot_means[i] = mean(boot_sample)                       
+}
+
+```
+
+True / False: The sampling distribution is calculated by resampling from the population, the bootstrap distribution is calculated by resampling from the sample. 
+
+A) True 
+B) False
+
+answer: a
+
+```{r}
+hist(boot_means)
+```
+
+True / False: To construct the 95% bootstrap confidence interval using the percentile method, we estimate the values of the 5th5th and 95th95th percentiles of the bootstrap distribution. 
+
+A) True 
+B) False 
+
+answer: b
+
+Exercise: Estimate a 90% confidence interval using the percentile method for the average weight gained by mothers during pregnancy, explain briefly how you estimated the interval, and interpret this interval in context of the data.
+
+
+```{r}
+zvalue<-qnorm(.95)
+range=zvalue*sd(gained_clean)
+confidece_interval_gained=c(mean(gained_clean)-range,mean(gained_clean)+range)
+```
+
+#Bootstrap
+
+```{r}
+se=sd(gained_clean)/sqrt(length(boot_means))
+range_bootmeans=zvalue*se
+confidece_interval_bootmeans=c(mean(boot_means)-se,mean(boot_means)+se)
+```
+
+#The Inference Function
+```{r}
+source("http://bit.ly/dasi_inference")
+```
+By default the function takes 10,000 bootstrap samples (instead of the 100 you've taken above), creates a bootstrap distribution, and calculates the confidence interval, using the percentile method.
+```{r}
+inference(nc$gained, type = "ci", method = "simulation", conflevel = 0.90, est = "mean", boot_method = "perc")
+```
+
+
+We can easily change the confidence level to 95% by changing the conflevel:
+```{r}
+
+inference(nc$gained, type = "ci", method = "simulation", conflevel = 0.95, est = "mean", boot_method = "perc")
+```
+
+We can easily use the standard error method by changing the boot_method:
+```{r}
+
+inference(nc$gained, type = "ci", method = "simulation", conflevel = 0.95, est = "mean", boot_method = "se")
+```
+
+Or create an interval for the median instead of the mean:
+```{r}
+
+inference(nc$gained, type = "ci", method = "simulation", conflevel = 0.95, est = "median", boot_method = "se")
+
+```
+
+True / False: The bootstrap distribution of the median weight gain is a smooth, unimodal, symmetric distribution that yields a reliable confidence interval estimate. 
+
+A) True 
+B) False 
+
+answer: b
+
+Exercise: Create a 95% bootstrap confidence interval for the mean age of fathers at the birth of their child, nc$fage, using the standard error method. Interpret the interval within the context of the data.
+
+```{r}
+inference(nc$fage, type = "ci", method = "simulation", conflevel = 0.95, est = "mean", boot_method = "se")
+```
+
+Based on the plot from the previous exercise, which of the following is false about the relationship between habit and weight? 
+
+A) Median birth weight of babies born to non-smoker mothers is slightly higher than that of babies born to smoker mothers. 
+B) Range of birth weights of babies born to non-smoker mothers is greater than that of babies born to smoker mothers. 
+C) Both distributions are slightly right skewed. 
+D) The IQRs of the distributions are roughly equal. 
+
+answer: c
+
+```{r}
+nonsmoker_data<-nc[which(nc$habit=="nonsmoker"),"weight"]
+smoker_data<-nc[which(nc$habit=="smoker"),"weight"]
+
+hist(nonsmoker_data)
+hist(smoker_data)
+
+#getting the mean 
+by(nc$weight, nc$habit, mean)
+
+```
+
+The first argument is y, which is the response variable that we are interested in: nc$weight.
+The second argument is the grouping variable, x, which is the explanatory variable - the grouping variable accross the levels of which we're comparing the average value for the response variable, smokers and non-smokers: `nc$habit.
+The third argument, est, is the parameter we're interested in: "mean"} (other options are"median", or"proportion"`.)
+Next we decide on the type of inference we want: a hypothesis test ("ht") or a confidence interval ("ci").
+When performing a hypothesis test, we also need to supply the null value, which in this case is 0, since the null hypothesis sets the two population means equal to each other.
+The alternative hypothesis can be "less", "greater", or "twosided".
+Lastly, the method of inference can be "theoretical" or "simulation" based.
+
+```{r}
+inference(y = nc$weight, x = nc$habit, est = "mean", type = "ht", null = 0, alternative = "twosided", method = "theoretical")
+```
+
+By default the function sets the parameter of interest to be (??nonsmoker?????smoker??nonsmoker?????smoker). We can easily change this order by using the order argument:
+
+```{r}
+inference(y = nc$weight, x = nc$habit, est = "mean", type = "ht", null = 0, alternative = "twosided", method = "theoretical", order = c("smoker","nonsmoker"))
+```
+
+
+Change the type argument to "ci" to construct and record a confidence interval for the difference between the weights of babies born to smoking and non-smoking mothers. Which of the following is the best interpretation of the interval? 
+
+A) We are 95% confident that babies born to nonsmoker mothers are on average 0.05 to 0.58 pounds heavier at birth than babies born to smoker mothers. 
+B) We are 95% confident that babies born to nonsmoker mothers are on average 0.05 to 0.58 pounds lighter at birth than babies born to smoker mothers. 
+C) We are 95% confident that the difference in average weights of babies whose moms are smokers and nonsmokers is between 0.05 to 0.58 pounds. 
+D) We are 95% confident that the difference in average weights of babies in this sample whose moms are smokers and nonsmokers is between 0.05 to 0.58 pounds. 
+
+answer: b
+
+```{r}
+inference(y = nc$weight, x = nc$habit, est = "mean", type = "ci", null = 0, alternative = "twosided", method = "theoretical", order = c("smoker","nonsmoker"))
+```
+
+
+Now, a non-inference task: Determine the age cutoff for younger and mature mothers. Use a method of your choice. What is the maximum age of a younger mom and the minimum age of a mature mom, according to the data? 
+
+A) The maximum age of younger moms is 32 and minimum age of mature moms is 33. 
+B) The maximum age of younger moms is 33 and minimum age of mature moms is 34. 
+C) The maximum age of younger moms is 34 and minimum age of mature moms is 35. 
+D) The maximum age of younger moms is 35 and minimum age of mature moms is 36. 
+
+answer: c
+
+```{r}
+mature_mom_age_data<-nc[which(nc$mature=="mature mom"),"mage"]
+younger_mom_age_data<-nc[which(nc$mature=="younger mom"),"mage"]
+summary(mature_mom_age_data)
+summary(younger_mom_age_data)
+
+```
+
+
+Following questions are based on the following inference
+
+```{r}
+inference(y = gss$wordsum, x = gss$class, est = "mean", type = "ht", alternative = "greater", method = "theoretical")
+```
+
+
+Which of the following methods is appropriate for testing for a difference between the average vocabulary test scores among the various social classes? 
+
+A) Z test 
+B) T test 
+C) ANOVA 
+D) ??2??2 test 
+
+answer: c
+
+
+Calculate the modified ???? (??????????) to be used for these tests. 
+
+A) ?????=??=0.05?????=??=0.05 
+B) ?????=??/2=0.025?????=??/2=0.025 
+C) ?????=??/4=0.0125?????=??/4=0.0125 
+D) ?????=??/6=0.0083?????=??/6=0.0083 
+
+answer: d
+
+
+View the p-values of the pairwise tests from the ANOVA output. Which of the following pairs of means are concluded to be different at the modified significance level? 
+
+A) Middle and lower 
+B) Working and lower 
+C) Middle and upper 
+D) Working and upper 
+E) Upper and lower 
+
+answer: a

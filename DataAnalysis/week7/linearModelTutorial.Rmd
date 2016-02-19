@@ -1,0 +1,25 @@
+Insert Data
+
+```{r}
+cognitive = read.csv("http://bit.ly/dasi_cognitive")
+```
+
+Linear Model Function
+
+```{r}
+cog_full=lm(kid_score~mom_hs+mom_iq+mom_work+mom_age, data = cognitive)
+summary(cog_full)
+#final model using model selection
+cog_final=lm(kid_score~mom_hs+mom_iq+mom_work, data = cognitive)
+summary(cog_final)
+```
+
+Anova Analysis
+
+```{r}
+states=read.csv("http://bit.ly/dasi_states")
+pov_slr=lm(poverty~female_house,data=states)
+summary(pov_slr)
+anova(pov_slr)
+```
+

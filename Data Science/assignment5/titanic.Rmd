@@ -1,0 +1,35 @@
+---
+title: "titanic"
+output: html_document
+---
+
+```{r}
+data<-read.csv('titanic_train.csv')
+summary(data)
+```
+
+```{r}
+smp_size <- floor(0.7 * nrow(data))
+
+## set the seed to make your partition reproductible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+
+train <- data[train_ind, ]
+test <- data[-train_ind, ]
+```
+
+```{r}
+library(rpart)
+fol <- formula(Survived ~ PClass.1 + PClass.2 + PClass.3 + X7.91.fare.14.45 +
+                 X14.45.fare.31 + fare.31+Sibsp..2+Sibsp.2+X11.age.20+X20.age.31+
+                 train$age.31)
+model <- rpart(fol,method = "class", data = train)
+print(model)
+
+prediction<-predict(model,test,type = "class")
+totalMatch=sum(test$Survived==prediction)
+accuracy=totalMatch/length(test$pop)
+accuracy
+```
+
