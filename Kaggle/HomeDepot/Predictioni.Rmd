@@ -1,0 +1,324 @@
+sdf
+
+asf---
+title: "prediction_2"
+author: "Tamal Roy"
+date: "February 22, 2016"
+output: html_document
+---
+
+```{r}
+
+training<-read.csv("train.csv")
+testing<-read.csv("test.csv")
+relevence=training$relevance
+train=training[,-5]
+test=testing
+
+#train_cutoff=74067
+
+attr<-read.csv("attributes.csv")
+pdes<-read.csv("product_descriptions.csv")
+```
+
+```{r}
+#lower case applied
+
+for (i in 3:length(names(training))){
+  training[,names(training)[i]]=tolower(training[,names(training)[i]])
+}
+
+for (i in 3:length(names(train))){
+  train[,names(train)[i]]=tolower(train[,names(train)[i]])
+}
+
+for (i in 3:length(names(test))){
+  testing[,names(test)[i]]=tolower(test[,names(test)[i]])
+  test[,names(test)[i]]=tolower(test[,names(test)[i]])
+}
+
+for (i in 2:length(names(attr))){
+  attr[,names(attr)[i]]=tolower(attr[,names(attr)[i]])
+}
+pdes$product_description=tolower(pdes$product_description)
+
+```
+
+
+
+#count the unique product id accross datasets
+
+```{r}
+#venn diagram for train and test
+
+library(VennDiagram)
+pidTrain=unique(train$product_uid)
+pidTest=unique(test$product_uid)
+pidAttr=unique(attr$product_uid)
+pidDesc=unique(attr$product_uid)
+
+grid.newpage()
+venn.plot1<-draw.pairwise.venn(
+  length(pidTrain),length(pidTest),length(intersect(pidTrain,pidTest)),
+  category = c("Train Product_uid","Test Product_uid")
+)
+grid.draw(venn.plot1)
+rm(pidAttr);rm(pidDesc);rm(pidTest); rm(pidTrain)
+rm(venn.plot1)
+```
+
+
+
+#Relevence Score at training set
+
+```{r}
+table(training$relevance)
+barplot(table(training$relevance))
+```
+
+```{r}
+attrFreq=sort(table(tolower(attr$name)), decreasing = TRUE)
+rownames(attrFreq[1:10])
+names(attr)
+library(sqldf)
+library(stringr)
+
+id=train$id
+tempFrame=data.frame(id)
+id=test$id
+tempFrame_test=data.frame(id)
+
+tempFrame$product_uid=train$product_uid
+tempFrame_test$product_uid=test$product_uid
+
+#consider the top 10 attribute
+attrbuteNo=15
+
+attrAdded=rownames(attrFreq)[1:attrbuteNo]
+
+for (i in 1:attrbuteNo){
+  
+if (i!=12 && i!=14){ 
+  
+str=paste("'",rownames(attrFreq)[i],"'",sep = "")
+str1=paste("value_top",i,sep = "")
+table=sqldf(paste("SELECT product_uid,value AS",str1,"FROM attr
+            where name=",str,"GROUP BY product_uid"))
+tempFrame=merge(x=tempFrame,y=table,by="product_uid",all.x = TRUE)
+tempFrame_test=merge(x=tempFrame_test,y=table,by="product_uid",all.x = TRUE)
+
+} 
+
+}
+
+rm(attrbuteNo)
+
+```
+
+#add material 
+
+```{r}
+attr_Occurrence=data.frame(AttributeName=rownames(attrFreq),Freq=attrFreq)
+rownames(attr_Occurrence)<-NULL
+
+#brand
+attr_Occurrence_by_brand=attr_Occurrence[which(grepl("brand",attr_Occurrence$AttributeName)==TRUE),]
+#5 attr
+for (i in 1:1){
+
+if (attr_Occurrence_by_brand$AttributeName[i] %in% attrAdded == FALSE){
+str=paste("'",attr_Occurrence_by_brand$AttributeName[i],"'",sep = "")
+#str1=str_replace_all(str, fixed(" "), "")
+str1=paste("value_brand",i,sep="")
+table=sqldf(paste("SELECT product_uid,value AS",str1,"FROM attr
+            where name=",str,"GROUP BY product_uid"))
+tempFrame=merge(x=tempFrame,y=table,by="product_uid",all.x = TRUE)  
+tempFrame_test=merge(x=tempFrame_test,y=table,by="product_uid",all.x = TRUE)  
+attrAdded=c(attrAdded,as.character(attr_Occurrence_by_brand$AttributeName[i]))
+}  
+
+}
+
+attr_Occurrence_by_material=attr_Occurrence[which(grepl("material",attr_Occurrence$AttributeName)==TRUE),]
+#15 attr
+for (i in 1:1){
+
+if (attr_Occurrence_by_material$AttributeName[i] %in% attrAdded == FALSE){
+str=paste("'",attr_Occurrence_by_material$AttributeName[i],"'",sep = "")
+str1=paste("value_material",i,sep = "")
+#str1=str_replace_all(str, fixed(" "), "")
+table=sqldf(paste("SELECT DISTINCT product_uid,value AS",str1,"FROM attr
+            where name=",str,"GROUP BY product_uid"))
+tempFrame=merge(x=tempFrame,y=table,by="product_uid",all.x = TRUE)  
+tempFrame_test=merge(x=tempFrame_test,y=table,by="product_uid",all.x = TRUE)  
+attrAdded=c(attrAdded,as.character(attr_Occurrence_by_material$AttributeName[i]))
+}  
+
+}
+
+
+
+
+
+```
+
+
+
+```{r}
+#join tempFrame and train
+tempFrame=sqldf("SELECT * FROM train, tempFrame
+                WHERE train.id=tempFrame.id AND train.product_uid=tempFrame.product_uid")
+
+tempFrame_test=sqldf("SELECT * FROM test, tempFrame_test
+                WHERE test.id=tempFrame_test.id AND test.product_uid=tempFrame_test.product_uid")
+
+tempFrame$id<-NULL
+tempFrame$product_uid<-NULL
+
+tempFrame_test$id<-NULL
+tempFrame_test$product_uid<-NULL
+
+
+library(stringdist)
+
+for (i in 5:length(tempFrame)){
+  str=paste("value",i)
+  #tempFrame[,str]= stringdist(tempFrame[,i],tempFrame[,4],method = "cosine")
+  tempFrame[,i]= as.numeric(stringdist(tempFrame[,i],tempFrame[,4],method = "cosine"))
+  tempFrame_test[,i]= as.numeric(stringdist(tempFrame_test[,i],tempFrame_test[,4],method = "cosine"))
+}
+tempFrame[is.na(tempFrame)]<-1
+tempFrame_test[is.na(tempFrame_test)]<-1
+```
+
+
+
+
+
+
+
+```{r}
+tempFrame$prod_search_sim_1=as.numeric(stringdist(tempFrame$search_term,tempFrame$product_title,method = "cosine"))
+tempFrame$prod_search_sim_2=as.numeric(stringdist(tempFrame$search_term,tempFrame$product_title,method = "jw"))
+
+tempFrame_test$prod_search_sim_1=as.numeric(stringdist(tempFrame_test$search_term,tempFrame_test$product_title,method = "cosine"))
+tempFrame_test$prod_search_sim_2=as.numeric(stringdist(tempFrame_test$search_term,tempFrame_test$product_title,method = "jw"))
+
+
+tempFrame$search_term_count=sapply(gregexpr("\\W+", tempFrame$search_term), length) + 1
+tempFrame_test$search_term_count=sapply(gregexpr("\\W+", tempFrame_test$search_term), length) + 1
+
+tempFrame=merge(x=tempFrame,y=pdes,by="product_uid",all.x = TRUE)
+tempFrame_test=merge(x=tempFrame_test,y=pdes,by="product_uid",all.x = TRUE)
+
+tempFrame$proddes_search_sim_1=as.numeric(stringdist(tempFrame$search_term,tempFrame$product_description,method = "cosine"))
+
+tempFrame$proddes_search_sim_2=as.numeric(stringdist(tempFrame$search_term,tempFrame$product_description,method = "jw"))
+
+tempFrame_test$proddes_search_sim_1=as.numeric(stringdist(tempFrame_test$search_term,tempFrame_test$product_description,method = "cosine"))
+
+tempFrame_test$proddes_search_sim_2=as.numeric(stringdist(tempFrame_test$search_term,tempFrame_test$product_description,method = "jw"))
+
+#if search term is at product description
+
+find_search_term_des<-function(x){
+  res=0
+  if (grepl(x["search_term"],x["product_description"])==TRUE){
+      res=res+1
+    }
+  return(res)
+}
+
+tempFrame$search_on_des=apply(tempFrame,1,find_search_term_des)
+tempFrame_test$search_on_des=apply(tempFrame_test,1,find_search_term_des)
+
+
+
+find_search_term_title<-function(x){
+  res=0
+  if (grepl(x["search_term"],x["product_title"])==TRUE){
+      res=res+1
+    }
+  return(res)
+}
+
+tempFrame$search_on_title=apply(tempFrame,1,find_search_term_title)
+tempFrame_test$search_on_title=apply(tempFrame_test,1,find_search_term_title)
+
+find_search_term_des1<-function(x){
+  
+  temp=strsplit(as.character(x["search_term"])," ")[[1]]
+  
+  sum=0
+  
+  for (i in 1:length(temp)){
+    if (grepl(temp[i],x["product_description"])==TRUE){
+      sum=sum+1
+    }
+  }
+  
+  res=sum*1.0/length(temp)
+  
+  return(res)
+}
+
+tempFrame$search_on_des1=apply(tempFrame,1,find_search_term_des1)
+tempFrame_test$search_on_des1=apply(tempFrame_test,1,find_search_term_des1)
+
+#write.csv(tempFrame,"tempFrame.csv")
+#write.csv(tempFrame_test,"tempFrame_test.csv")
+names(tempFrame)
+
+```
+
+```{r}
+
+#tempFrame=read.csv("tempFrame.csv")
+#tempFrame_test=read.csv("tempFrame_test.csv")
+
+tempFrame$product_uid<-NULL
+
+tempFrame$product_title<-NULL
+tempFrame$search_term<-NULL
+tempFrame$id<-NULL
+tempFrame$product_description<-NULL
+
+tempFrame_test$product_uid<-NULL
+tempFrame_test$product_title<-NULL
+tempFrame_test$search_term<-NULL
+tempFrame_test$id<-NULL
+tempFrame_test$product_description<-NULL
+
+trainIndex=sample(1:74067,50000)
+
+train=tempFrame
+
+train$relevance=as.numeric(training$relevance)
+
+testfr=tempFrame_test
+#testfr=train[-trainIndex,]
+#train=train[trainIndex,]
+
+library(randomForest)
+fol<-formula(relevance~.)
+model_rf<-randomForest(fol,data =train,maxnode=600,tree=50)
+testfr[is.na(testfr)]<-1.0
+
+testfr$value_top6[which(testfr$value_top6==Inf)]=1.0
+testfr$value_top10[which(testfr$value_top10==Inf)]=1.0
+
+prediction_rf<-predict(model_rf,testfr)
+summary(prediction_rf)
+
+rmse(testfr$relevance,prediction_rf)
+
+
+id=testing$id
+output=data.frame(id)
+output$relevance=prediction_rf
+
+write.csv(output,"output.csv")
+
+
+```
+
