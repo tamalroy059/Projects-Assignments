@@ -1,0 +1,290 @@
+---
+title: "model2"
+author: "Tamal Roy"
+date: "February 27, 2016"
+output: html_document
+---
+
+
+```{r}
+library(stringi)
+library(caret)
+library(sqldf)
+library(impute)
+library(corrplot)
+library(PCAmixdata)
+library(randomForest)
+library(hydroGOF)
+library(missForest)
+
+training=read.csv("train.csv")
+testCase=read.csv("test.csv")
+train=training
+test=testCase
+```
+
+
+pre process data 
+```{r}
+#complete case of data continuous variables
+train_complete=train[complete.cases(train),]
+train_complete=train
+Id=train_complete$ID
+Id_test=test$ID
+
+train_complete$ID<-NULL
+test$ID<-NULL
+target=train_complete$target
+train_complete$target<-NULL
+```
+
+
+
+#Impute missing values for test
+
+```{r}
+
+col_num=c()
+for (i in 1:length(test)){
+  if(class(test[,i])=="factor"){col_num=c(col_num,i)}
+}
+
+test_categorial=test[,col_num]
+test_continuous=test[,-col_num]
+train_categorial=train_complete[,col_num]
+train_continuous=train_complete[,-col_num]
+
+
+f=function(x){
+#   x<-as.numeric(as.character(x)) #first convert each column into numeric if it is from factor
+  
+   x[is.na(x)] =median(x, na.rm=TRUE) #convert the item with NA to median value from the column
+   x #display the column
+}
+test_n=data.frame(apply(test_continuous,2,f))
+test_continuous=test_n
+
+train_continuous=data.frame(apply(train_continuous,2,f))
+
+
+test=data.frame(test_continuous,test_categorial)
+train_complete=data.frame(train_continuous,train_categorial)
+
+```
+
+
+```{r}
+#nearZero Variance
+col_num=nearZeroVar(train_complete)
+
+#removing near Zero Variance Predictors
+train=train_complete[,-col_num]
+test=test[,-col_num]
+rm(train_complete)
+
+#seprating categorial variables and continuous varibles
+col_num=c()
+for (i in 1:length(train)){
+  if(class(train[,i])=="factor"){col_num=c(col_num,i)}
+}
+train_categorial=train[,col_num]
+train_continuous=train[,-col_num]
+
+test_categorial=test[,col_num]
+test_continuous=test[,-col_num]
+
+
+#between predictor relations
+correlations=cor(train_continuous)
+highCorrelations=findCorrelation(correlations,cutoff = .75)
+length(highCorrelations)
+
+#removing predictors
+train_continuous=train_continuous[,-highCorrelations]
+test_continuous=test_continuous[,-highCorrelations]
+
+rm(correlations)
+rm(highCorrelations)
+
+
+```
+
+#Chi Square Test for categorial predictors
+
+```{r}
+#Removing the predictor variable that is independant of target variable
+train_categorial=train_categorial[,-1]
+test_categorial=test_categorial[,-1]
+```
+
+#dividing by categorial variabels by more than 10 levels 
+```{r}
+levels_lot=c()
+for (i in 1:length(train_categorial)){
+  if(length(levels(train_categorial[,i]))>=10){
+    levels_lot=c(levels_lot,i)
+  }
+}
+
+train_categorial_1=train_categorial[,-levels_lot]
+train_categorial_2=train_categorial[,levels_lot]
+
+test_categorial_1=test_categorial[,-levels_lot]
+test_categorial_2=test_categorial[,levels_lot]
+```
+
+
+```{r}
+#train_categorical
+for (i in 1:dim(train_categorial_2)[2]){
+    level.t=levels(train_categorial_2[,i])
+    
+    temp=rep(-1,dim(train_categorial_2)[1])
+    temp_test=rep(-1,dim(test_categorial_2)[1])
+    for (j in 1:length(level.t)){
+    value=sum(target[which(train_categorial_2[,i]==level.t[j])])/length(which(train_categorial_2[,i]==level.t[j]))
+    
+    
+    temp[which(train_categorial_2[,i]==level.t[j])]=value
+    temp_test[which(test_categorial_2[,i]==level.t[j])]=value
+  }  
+    train_categorial_2[,i]=temp  
+    test_categorial_2[,i]=temp_test
+}
+
+test_categorial_2[is.na(test_categorial_2)]<-0
+
+rm(level.t)
+rm(j)
+rm(temp)
+rm(temp_test)
+
+```
+
+
+```{r}
+train_continuous=data.frame(train_continuous,train_categorial_2)
+test_continuous=data.frame(test_continuous,test_categorial_2)
+#ANOVA test
+
+dependancy=c()
+independent=c()
+
+for (i in 1:length(train_continuous)){
+    aov.test=aov(formula =train_continuous[,i]~target)
+    temp=summary(aov.test)
+    if(temp[[1]][5]$`Pr(>F)`[1]<.05){
+      dependancy=c(dependancy,i)
+    }else{
+      independent=c(independent,i)
+    }
+     
+}
+
+
+train_continuous=train_continuous[,-independent]
+test_continuous=test_continuous[,-independent]
+rm(dependancy)
+rm(independent)
+
+train_categorial=train_categorial_1
+test_categorial=test_categorial_1
+rm(train_categorial_1)
+rm(train_categorial_2)
+rm(test_categorial_1)
+rm(test_categorial_2)
+rm(aov.test)
+```
+
+
+```{r}
+simpleMod<-dummyVars("~.",data = train_categorial)
+train_temp=train_categorial
+test_temp=test_categorial
+
+train_temp=data.frame(predict(simpleMod,train_categorial))
+
+simpleMod<-dummyVars("~.",data = test_categorial)
+test_temp=data.frame(predict(simpleMod,test_categorial))
+rm(simpleMod)
+
+#near zero variance
+index_to_remove=nearZeroVar(train_temp)
+train_temp=train_temp[,-index_to_remove]
+test_temp=test_temp[,-index_to_remove]
+train_categorial=train_temp
+test_categorial=test_temp
+
+
+correlations=cor(train_categorial)
+highCorrelations=findCorrelation(correlations,cutoff = .75)
+length(highCorrelations)
+
+train_categorial=train_categorial[,-highCorrelations]
+test_categorial=test_categorial[,-highCorrelations]
+
+
+rm(highCorrelations)
+rm(correlations)
+```
+
+
+boxcox, center, scale
+
+```{r}
+
+trans<-preProcess(train_continuous,method = c("BoxCox","center","scale"))
+transformed<-predict(trans,train_continuous)
+train=data.frame(transformed,train_categorial)
+
+trans<-preProcess(test_continuous,method = c("BoxCox","center","scale"))
+transformed<-predict(trans,test_continuous)
+test=data.frame(transformed,test_categorial)
+
+rm(train_continuous)
+rm(train_categorial)
+rm(transformed)
+rm(train_temp)
+rm(test_temp)
+
+train$target=target
+
+write.csv(train,"transformed.csv")
+write.csv(test,"transformed_test.csv")
+```
+
+
+
+
+
+
+
+```{r}
+#train$target=target
+#test=read.csv("transformed_test.csv")
+#train=read.csv("transformed.csv")
+
+train$v71.C<-NULL
+test$v71.E<-NULL
+
+train_index=sample(1:114321,90000)
+
+train_sample=train
+test_sample=test
+#test_sample=train[-train_index,]
+#test_sample=training
+
+
+
+fol=formula(target~.)
+model_rf=randomForest(fol,data = train_sample,maxnodes=100,ntree=100,method="class")
+predict_rf=predict(model_rf,test_sample)
+summary(predict_rf)
+rmse(test_sample$target,predict_rf)
+
+ID=testCase$ID
+output=data.frame(ID)
+output$PredictedProb=predict_rf
+write.csv(output,"output.csv")
+```
+
