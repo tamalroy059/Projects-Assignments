@@ -1,9 +1,0 @@
-Via: 1.1 0a65cba27376ea639b1f91e8b2ce1450.cloudfront.net (CloudFront), 1.1 ttc2.pinebushschools.org (squid/3.3.13)
-X-Cache: Miss from cloudfront
-X-Cache: MISS from ttc2.pinebushschools.org
-Content-Encoding: gzip
-Vary: Content-Type,Host,Cookie,Accept-Encoding,User-Agent
-Server: Server
-X-Amz-Cf-Id: e7qungL2eqPLQKw4TrxEOjsETD-MX1EYUc89FSzuZG4EulRoBIQ7WQ==
-Date: Tue, 27 Mar 2018 20:22:43 GMT
-Content-Type: text/html
