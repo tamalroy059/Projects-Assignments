@@ -1,0 +1,4 @@
+
+stname 54.174.69.41
+  IdentityFile ~/.ssh/data-enhanced-scripts.pem
+  User ec2-user

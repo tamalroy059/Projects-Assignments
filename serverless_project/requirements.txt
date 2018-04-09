@@ -1,0 +1,4 @@
+boto3==1.5.20
+bottlenose==1.1.7
+selenium==3.6.0
+webdriver-manager==1.5.1

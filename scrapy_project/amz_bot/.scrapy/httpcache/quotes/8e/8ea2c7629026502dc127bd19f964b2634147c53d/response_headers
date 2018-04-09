@@ -1,0 +1,16 @@
+Expires: -1
+X-Cache: Miss from cloudfront
+Content-Encoding: gzip
+Set-Cookie: session-id=133-9177472-8207933; Domain=.amazon.com; Expires=Tue, 01-Jan-2036 08:00:01 GMT; Path=/
+Set-Cookie: session-id-time=2082787201l; Domain=.amazon.com; Expires=Tue, 01-Jan-2036 08:00:01 GMT; Path=/
+Strict-Transport-Security: max-age=47474747; includeSubDomains; preload
+Vary: Accept-Encoding,User-Agent
+Server: Server
+Via: 1.1 0302e8c462515ae281b72d9c815a5698.cloudfront.net (CloudFront)
+X-Amz-Cf-Id: oAH_nc1F-vnIIokVZY-XTKv7Q2AV_abeH1YVDC9tveBRKXf-cjir6A==
+Pragma: no-cache
+Cache-Control: no-cache
+Date: Tue, 27 Mar 2018 20:27:07 GMT
+P3P: policyref="https://www.amazon.com/w3c/p3p.xml",CP="CAO DSP LAW CUR ADM IVAo IVDo CONo OTPo OUR DELi PUBi OTRi BUS PHY ONL UNI PUR FIN COM NAV INT DEM CNT STA HEA PRE LOC GOV OTC "
+Content-Type: text/html;charset=UTF-8
+X-Frame-Options: SAMEORIGIN
