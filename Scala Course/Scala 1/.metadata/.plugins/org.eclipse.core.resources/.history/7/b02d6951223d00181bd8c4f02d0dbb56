@@ -1,0 +1,3 @@
+object helloworksheet {
+  println("Welcome to the Scala worksheet")
+}

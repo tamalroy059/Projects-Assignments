@@ -1,0 +1,36 @@
+package week3
+
+object intsets {
+  println("Welcome to the Scala worksheet")
+  
+  
+  
+  
+  
+  
+}
+
+abstract class IntSet {
+	def incl(x:Int): IntSet
+	def contains(x: Int): Boolean
+}
+
+
+class Empty extends IntSet {
+	def contains(x:Int):Boolean = false
+	def incl(x:Int): IntSet = new NonEmpty(x, new Empty, new Empty)
+}
+
+
+class NonEmpty(elem: Int, Left: IntSet, Right: IntSet) extends IntSet{
+	
+	def contains(x:Int) =
+		if (x<elem) Left contains x
+		else if (x>elem) Right contains x
+		else true
+		
+	def incl(x:Int): IntSet =
+		if (x<elem) new NonEmpty(elem, Left incl x, Right)
+		else if (x>elem) new NonEmpty(elem, Left, Right incl x)
+	
+}

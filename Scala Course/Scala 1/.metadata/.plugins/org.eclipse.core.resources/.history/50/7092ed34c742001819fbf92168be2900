@@ -1,0 +1,37 @@
+package week3
+
+object intsets {
+  println("Welcome to the Scala worksheet")       //> Welcome to the Scala worksheet
+  val t1 =new NonEmpty(3, new Empty, new Empty)   //> t1  : week3.NonEmpty = week3.NonEmpty@7c75222b
+  val t2 = t1 incl 4                              //> t2  : week3.IntSet = week3.NonEmpty@4c203ea1
+  
+  
+  
+    
+}
+
+abstract class IntSet {
+	def incl(x:Int): IntSet
+	def contains(x: Int): Boolean
+}
+
+
+class Empty extends IntSet {
+	def contains(x:Int):Boolean = false
+	def incl(x:Int): IntSet = new NonEmpty(x, new Empty, new Empty)
+}
+
+
+class NonEmpty(elem: Int, Left: IntSet, Right: IntSet) extends IntSet{
+	
+	def contains(x:Int) =
+		if (x<elem) Left contains x
+		else if (x>elem) Right contains x
+		else true
+		
+	def incl(x:Int): IntSet =
+		if (x<elem) new NonEmpty(elem, Left incl x, Right)
+		else if (x>elem) new NonEmpty(elem, Left, Right incl x)
+		else this
+	
+}

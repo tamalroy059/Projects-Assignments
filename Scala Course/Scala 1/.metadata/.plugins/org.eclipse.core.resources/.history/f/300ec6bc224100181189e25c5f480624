@@ -1,0 +1,20 @@
+package week2
+import math.abs
+
+
+object worksheet2 {
+  println("Fixed Point Function")                 //> Fixed Point Function
+  
+  val tolerance = 0.0001
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+}

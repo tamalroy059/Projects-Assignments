@@ -1,0 +1,5 @@
+package week1
+
+object factorial {
+ 1                                                //> res0: Int(1) = 1
+}

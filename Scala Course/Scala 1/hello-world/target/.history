@@ -1,0 +1,4 @@
+echo 'addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "5.1.0")'
+exit
+eclipse
+exit

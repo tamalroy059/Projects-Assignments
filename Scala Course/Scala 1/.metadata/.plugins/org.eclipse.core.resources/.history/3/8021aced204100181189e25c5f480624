@@ -1,0 +1,69 @@
+package week2
+
+object worksheet1 {
+1+2
+
+def sum(f: Int => Int, a: Int, b: Int): Int =
+	if (a>b) 0
+	else f(a) + sum(f, a+1, b)
+
+
+def id(x:Int):Int = x;
+
+def sumInts(a:Int, b:Int) =  sum(id, a, b)
+
+sumInts(1, 6)
+
+
+(x:Int) => x*x*x
+
+(x: Int, y: Int)=>x+y
+
+def sumInts1(a: Int, b: Int) = sum(x=>x, a, b)
+
+def sum1(f: Int => Int, a: Int , b:Int) = {
+	def loop(a:Int, acc:Int): Int =
+		if (a>b) acc
+		else loop(a+1, f(a)+acc)
+		
+	loop(a,0)
+}
+
+sumInts1( 3, 5)
+
+
+def sum2(f:Int=>Int): (Int, Int)=>Int = {
+def sumF(a:Int, b:Int): Int =
+	if (a>b) 0
+	else f(a) + sumF(a+1,b)
+	
+sumF
+
+}
+
+def sumInts2 = sum2(x=>x)
+sumInts2(1,10)
+
+sum2(x=>x)(1,10)
+
+def sum3(f: Int =>Int)(a:Int, b:Int):Int=
+if (a>b) 0 else f(a)+ sum3(f)(a+1,b)
+
+sum3(x=>x*x)(1,10)
+
+def product(f:Int=> Int)(a:Int, b:Int):Int =
+	if (a>b) 1
+	else f(a)*product(f)(a+1,b)
+	
+product(x=>x*x)(3,4)
+
+def fact(n:Int) = product(x=>x)(1,n)
+
+fact(5)
+
+def mapReduce(f: Int => Int, combine: (Int, Int) => Int, zero: Int)(a:Int, b:Int):Int =
+	if (a>b) zero
+	else combine(f(a), mapReduce(f,combine, zero)(a+1,b)
+
+
+}

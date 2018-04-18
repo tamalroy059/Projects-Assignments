@@ -1,0 +1,32 @@
+package week2
+
+object scratch {
+  println("Welcome to the Scala worksheet")       //> Welcome to the Scala worksheet
+  
+  type Set = Int => Boolean
+
+  /**
+   * Indicates whether a set contains a given element.
+   */
+  def contains(s: Set, elem: Int): Boolean = s(elem)
+                                                  //> contains: (s: week2.scratch.Set, elem: Int)Boolean
+
+  /**
+   * Returns the set of the one given element.
+   */
+    def singletonSet(elem: Int): Set = {
+      def retFun(elem:Int) = elem<0
+      retFun
+      }                                           //> singletonSet: (elem: Int)week2.scratch.Set
+      
+    contains(singletonSet(2), -1)                 //> res0: Boolean = true
+   
+    
+    
+  
+  
+  
+  
+  
+  
+}

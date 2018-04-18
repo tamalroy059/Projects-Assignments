@@ -1,0 +1,15 @@
+exit
+run
+scala
+console
+compile
+scala 
+console
+compile
+import example.Lists._
+console
+test
+run
+compile
+run
+console

@@ -1,0 +1,12 @@
+package week3
+
+object intsets {
+  println("Welcome to the Scala worksheet")       //> Welcome to the Scala worksheet
+  new IntSet
+}
+
+abstract class IntSet {
+	def incl(x:Int): IntSet
+	def contains(x: Int): Boolean
+}
+
